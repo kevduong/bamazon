@@ -52,19 +52,41 @@ return connection.query("SELECT item_id, product_name, department_name, price FR
         ]);
     }
     console.log(table.toString());
+    checkOut();
 });
 
-// Prompt Message to the customer
-
-var cart = function() {
-    console.log(table.toString());
-    inquirer.prompt([{
+//The app should then prompt users with two messages.
+  // The first should ask them the ID of the product they would like to buy.
+  // The second message should ask how many units of the product they would like to buy.
+function checkOut() {
+  var query = "SELECT * FROM products WHERE ?";
+    inquirer.prompt([
+      {
         name: 'id',
-        type: 'prompt',
-        message: "To make a purchase, please select the product's ID number"
-    }, {
-        name: "stock",
-        type: 'prompt',
-        message: "How many would you like to order?"
-    }]);
-};
+        type: 'list',
+        message: "To make a purchase, please select the product's ID number",
+        choices: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    },
+    {
+      name: 'stock',
+      type: 'input',
+      message: "How many would you like to purchase?"
+    }
+  ]).then(function(answer){
+    connection.query(query, {id: answer.item_id}, function (err, res){
+        var item = res[0].product_name;
+        var inventory = parseInt(res[0].stock_quanity);
+        var cart = parseInt(answer.stock);
+        var amount = parseInt(res[0].price);
+          if (cart>inventory) {
+            console.log('Sorry! We do not have sufficient stock.');
+          } else {
+            var updateStock = inventory-cart;
+            var totalPrice = cart*price;
+            connection.query('UPDATE products SET ? WHERE ?', [{stock_quanity: updateStock}], {id: answer.item_id}, function(err,res){
+            });
+            console.log('Total: $'+totalPrice);
+          }
+    });
+  });
+}
